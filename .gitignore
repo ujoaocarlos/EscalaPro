@@ -1,0 +1,8 @@
+# Arquivos locais
+.DS_Store
+Thumbs.db
+
+# Artefatos de prévia e editor
+*.log
+node_modules/
+
