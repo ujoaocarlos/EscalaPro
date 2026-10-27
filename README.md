@@ -4,7 +4,7 @@ Simulador gerencial de jornadas, dimensionamento de equipe e custos de pessoal.
 
 ## Uso
 
-Abra `index.html` em um navegador moderno, preferencialmente por HTTPS. Os dados de cenários e rascunhos ficam somente no armazenamento local do navegador.
+Abra `index.html` em um navegador moderno, preferencialmente por HTTPS. Os dados de cenários e rascunhos ficam somente no armazenamento local do navegador. Nesta versão, todos os recursos — salvar, imprimir, exportar CSV e copiar resumo — estão liberados sem chave.
 
 ## Limites do simulador
 
