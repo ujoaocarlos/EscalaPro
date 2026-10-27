@@ -39,12 +39,12 @@ input[aria-invalid=true],select[aria-invalid=true]{border-color:#a32626;backgrou
 .saved-actions{display:grid;grid-template-columns:repeat(4,max-content);align-items:stretch}.saved-actions button{white-space:nowrap}.footer{margin:20px 0 0}.footer a{color:inherit;font-weight:700}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:540px){.saved-actions{grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.saved-actions button{width:100%}}
 </style></head><body data-tab="1">
-<header><div><h1>EscalaPro<small>Essencial</small></h1><p>Jornadas e custos de pessoal · por Mônica Paz</p></div><button class="ghost np" id="lic"></button></header>
+<header><div><h1>EscalaPro<small>Essencial</small></h1><p>Jornadas e custos de pessoal · por Mônica Paz</p></div></header>
 <div class="kpi" id="kpi" aria-live="polite"></div>
 <noscript><p class="card">Este aplicativo precisa de JavaScript. Abra no Safari ou Chrome, em endereço HTTPS.</p></noscript>
 <main>
 <div class="pl" id="pl"></div>
-<p class="mut np">v1.6.0 · Simulador gerencial: estimativas, não é folha de pagamento nem parecer jurídico. Dados ficam só neste navegador.</p>
+<p class="mut np">v1.6.1 · Simulador gerencial: estimativas, não é folha de pagamento nem parecer jurídico. Dados ficam só neste navegador.</p>
 <div id="err" role="alert" aria-live="assertive"></div>
 <div class="cols"><div class="L"><section class="card tab t1 np"><h3>Cenários salvos</h3><label for="saved">Cenário</label><select id="saved"></select>
 <div class="b saved-actions" style="margin-top:12px"><button id="save">Salvar</button><button id="load" class="s">Carregar</button><button id="rm" class="s">Excluir</button><button id="new" class="s">Novo</button></div></section>
@@ -62,15 +62,11 @@ input[aria-invalid=true],select[aria-invalid=true]{border-color:#a32626;backgrou
 <p class="mut tab t3 footer">EscalaPro · por Mônica Paz · Estimativa gerencial simplificada; não substitui profissional habilitado. Não salve dados pessoais sensíveis aqui. <a href="https://presidencia.gov.br/ccivil_03/constituicao/emendas/emc/emc141.htm" target="_blank" rel="noopener noreferrer">Referência: EC nº 141/2026</a>.</p>
 </div></div></main>
 <nav class="np" id="nav" aria-label="Navegação do simulador"><button data-t="1" aria-current="true">Dados</button><button data-t="2">Resultados</button><button data-t="3">Relatório</button></nav>
-<dialog id="dlg" aria-labelledby="dlg-title"><h3 id="dlg-title">Licença</h3><p class="mut" id="ls"></p><label for="lk">Chave de licença</label><textarea id="lk" rows="5" placeholder="Cole aqui a chave recebida na compra"></textarea>
-<div class="b" style="margin-top:12px"><button id="act">Ativar</button><button id="unact" class="s">Remover</button><button id="cl" class="s">Fechar</button></div></dialog>
 <dialog id="dq" aria-labelledby="dqt"><h3 id="dqt"></h3><p class="mut" id="dqm"></p><input id="dqi" type="text" maxlength="80" aria-label="Nome"><div class="b" style="margin-top:12px"><button id="dqo">OK</button><button id="dqc" class="s">Cancelar</button></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
 const $=i=>document.getElementById(i);
-// Chave pública de verificação de licença. A chave privada correspondente não é incluída neste aplicativo.
-const PK={"kty":"EC","x":"BN0gB1zlnzLY4wVDbF9aT77BML4jDIJnjI075uO_qVc","y":"UNISql4AU2vLJFgi9I41024v0ymF5Hjyb-Rn3ClFwnY","crv":"P-256"};
 // Regras de incidência patronal (revisar a cada vigência): Simples I/II/III/V = tudo no DAS; Anexo IV = CPP 20% + RAT, sem terceiros; Presumido/Real = CPP 20% + RAT×FAP + terceiros; desonerado 2026 = CPP 10% s/ folha. RAT, FAP e terceiros são informados por empresa.
 const PRE={simples:{cpp:0,rat:0,fap:1,terceiros:0,lock:['cpp','rat','fap','terceiros']},anexo4:{cpp:20,terceiros:0,lock:['cpp','terceiros']},desonerado:{cpp:10,lock:['cpp']},presumido:{cpp:20,lock:['cpp']},real:{cpp:20,lock:['cpp']},personalizado:{lock:[]}};
 const mk=(id,l,d,t='num',c='')=>`<div class="${c}"><label for="${id}">${l}</label>`+(Array.isArray(t)?`<select id="${id}">${t.map(o=>{const[a,b]=o.split('|');return`<option value="${a}"${a==d?' selected':''}>${b}</option>`}).join('')}</select>`:`<input id="${id}" value="${String(d).replace('.',',')}" ${t=='num'?'type="text" inputmode="decimal" autocomplete="off" enterkeyhint="next"':t=='time'?'type="time"':'type="text" maxlength="120"'}>`)+'</div>';
@@ -82,7 +78,7 @@ IDS.forEach(i=>{const e=$(i);if(e.tagName!=='TEXTAREA'){const m=document.createE
 const brl=x=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(x),fm=x=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(x),R=x=>Math.round((x+Number.EPSILON)*100)/100;
 const hm=m=>{m=((Math.round(m)%1440)+1440)%1440;return String(m/60|0).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let last=null,lic=null;
+let last=null;
 const num=t=>{t=String(t).trim().replace(/\s/g,'');if(t==='')return NaN;if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');else if(/^\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');return /^-?\d*\.?\d+$/.test(t)?Number(t):NaN};
 const touched=new Set();let tm;
 function paintErr(ids){IDS.forEach(i=>{const e=$(i),s=$('e_'+i);if(!s)return;const b=ids.includes(i)&&touched.has(i);e.setAttribute('aria-invalid',b);s.textContent=b?(NR[i]?`Informe um valor entre ${fm(NR[i][0])} e ${fm(NR[i][1])}${NR[i][2]?' (inteiro)':''}.`:'Obrigatório.'):''})}
@@ -115,19 +111,10 @@ if(rg!=='simples'){if(v.rat===0)A.push('Informe o RAT (grau de risco do CNAE) e 
 if(rg==='desonerado')A.push('Desoneração em 2026: CPP de 10% sobre a folha, além da CPRB de 0,6% a 2,7% sobre a receita bruta (não calculada aqui). Exige média de empregados de pelo menos 75% da média de 2025.');
 A.push('Dimensionamento por horas agregadas: não garante cobertura de postos, turnos, folgas e feriados.','Percentuais e provisões são simplificados; verifique CCT, CNAE, RAT/FAP, terceiros e regime tributário com seu contador.','Não simula adicional noturno, rescisões, limites individuais nem produtividade.');
 $('al').innerHTML=A.map(a=>`<li>${esc(a)}</li>`).join('');
-const w=lic?`Licenciado para ${lic.n} · ${lic.i}`:'Versão de demonstração';$('pl').textContent='EscalaPro · '+w+' · '+new Date().toLocaleDateString('pt-BR');
-last.rows=[['Indicador','Valor'],['Licença',w],['Empresa',v.empresa],['Setor',v.setor],['Regime (premissa)',$('regime').selectedOptions[0].text],['Escala',r.d+'x'+(7-r.d)],['Jornada atual/projetada (h)',r.c+' / '+r.h],['Entrada / saída',v.entrada+' / '+exit],['Empregados atuais',r.q],['Equipe teórica',r.people],...L,['Observações',v.obs],['Ressalvas',A.join(' | ')]];last.sum=sum+'\n'+w}
-// Licença: chave = base64url(JSON).base64url(assinatura ECDSA P-256). Só quem tem a chave privada emite licenças válidas.
-const b64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
-async function verify(k){try{const[p,sg]=k.trim().split('.');if(!p||!sg||!crypto.subtle)return null;const key=await crypto.subtle.importKey('jwk',PK,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
-if(!await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},key,b64(sg),new TextEncoder().encode(p)))return null;const j=JSON.parse(new TextDecoder().decode(b64(p)));return j.p==='escalapro'?j:null}catch{return null}}
-const LK='escalaPro_licenca',store=(f)=>{try{return f()}catch{return null}};
-function lbl(){$('lic').textContent=lic?'✓ '+lic.n:'Demonstração · Ativar licença';$('ls').textContent=lic?`Licença ${lic.i} (${lic.ed}) emitida em ${lic.d} para ${lic.n}.`:'Sem licença: cálculos liberados; salvar, imprimir e exportar exigem ativação.';if(last)draw(last.v,last.r)}
-async function boot(){const k=store(()=>localStorage.getItem(LK));if(k)lic=await verify(k);lbl()}
-$('lic').onclick=()=>{$('dlg').showModal();$('lk').focus()};$('cl').onclick=()=>$('dlg').close();
-$('act').onclick=async()=>{const j=await verify($('lk').value);if(!j){$('ls').textContent='Chave inválida. Confira se copiou a chave completa (e use HTTPS).';return}lic=j;store(()=>localStorage.setItem(LK,$('lk').value.trim()));$('lk').value='';lbl();$('dlg').close();toast('Licença ativada.')};
-$('unact').onclick=()=>{lic=null;store(()=>localStorage.removeItem(LK));lbl()};
-const gate=f=>()=>{if(!lic){$('dlg').showModal();return}if(!last)return toast('Corrija os campos destacados.');f()};
+const w='Relatório gerado no EscalaPro';$('pl').textContent='EscalaPro · '+new Date().toLocaleDateString('pt-BR');
+last.rows=[['Indicador','Valor'],['Empresa',v.empresa],['Setor',v.setor],['Regime (premissa)',$('regime').selectedOptions[0].text],['Escala',r.d+'x'+(7-r.d)],['Jornada atual/projetada (h)',r.c+' / '+r.h],['Entrada / saída',v.entrada+' / '+exit],['Empregados atuais',r.q],['Equipe teórica',r.people],...L,['Observações',v.obs],['Ressalvas',A.join(' | ')]];last.sum=sum+'\n'+w}
+const store=(f)=>{try{return f()}catch{return null}};
+const gate=f=>()=>{if(!last)return toast('Corrija os campos destacados.');f()};
 // Cenários
 const SK='escalaPro_v1_cenarios',all=()=>store(()=>JSON.parse(localStorage.getItem(SK)||'{}'))||{};
 function refresh(){const cur=$('saved').value;$('saved').innerHTML='<option value="">Selecionar cenário</option>'+Object.keys(all()).sort().map(n=>`<option>${esc(n)}</option>`).join('');$('saved').value=cur}
@@ -135,10 +122,10 @@ $('save').onclick=gate(async()=>{const n=await ask('Salvar cenário','Dê um nom
 $('load').onclick=()=>{const a=all()[$('saved').value];if(!a)return toast('Selecione um cenário.');IDS.forEach(i=>{if(a[i]!==undefined)$(i).value=a[i]});man={divAtual:1,divNovo:1};touched.clear();lockUI();calc();save();toast('Cenário carregado.')};
 $('rm').onclick=async()=>{const n=$('saved').value;if(!n)return toast('Selecione um cenário.');if(!await ask('Excluir cenário?',n,undefined,'Excluir'))return;const a=all();delete a[n];store(()=>localStorage.setItem(SK,JSON.stringify(a)));refresh()};
 $('new').onclick=async()=>{if(!await ask('Novo cenário','Limpa empresa, setor e observações. Os números continuam.',undefined,'Limpar'))return;['empresa','setor','obs'].forEach(i=>$(i).value='');calc();save()};
-// Saídas (liberadas só com licença). Campos de texto livre são neutralizados contra injeção de fórmula em planilhas.
+// Saídas livres. Campos de texto são neutralizados contra injeção de fórmula em planilhas.
 const cs=s=>/^[=+\-@\t\r]/.test(s)?"'"+s:s;
 $('print').onclick=gate(()=>print());
-$('csv').onclick=gate(()=>{const T=['Empresa','Setor','Observações','Licença'];const csv='\ufeff'+last.rows.map(r=>r.map((x,i)=>'"'+(T.includes(r[0])&&i==1?cs(String(x)):String(x)).replace(/"/g,'""')+'"').join(';')).join('\r\n');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='EscalaPro-cenario.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)});
+$('csv').onclick=gate(()=>{const T=['Empresa','Setor','Observações'];const csv='\ufeff'+last.rows.map(r=>r.map((x,i)=>'"'+(T.includes(r[0])&&i==1?cs(String(x)):String(x)).replace(/"/g,'""')+'"').join(';')).join('\r\n');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='EscalaPro-cenario.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)});
 $('copy').onclick=gate(async()=>{try{await navigator.clipboard.writeText(last.sum);toast('Resumo copiado.')}catch{toast('Cópia indisponível; use Exportar CSV.')}});
 const syncNav=()=>[...$('nav').children].forEach(b=>b.setAttribute('aria-current',b.dataset.t==document.body.dataset.tab));
 function goTab(t){if(t!=1){const{ids}=read();if(ids.length){ids.forEach(i=>touched.add(i));calc();document.body.dataset.tab='1';syncNav();$(ids[0]).focus();return}}document.body.dataset.tab=t;syncNav();scrollTo({top:0,behavior:'smooth'})}
@@ -147,12 +134,11 @@ function ask(t,m,def,ok='OK'){return new Promise(r=>{const d=$('dq'),i=$('dqi');
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),2600)}
 const DK='escalaPro_rascunho';let st;const save=()=>{clearTimeout(st);st=setTimeout(()=>store(()=>localStorage.setItem(DK,JSON.stringify(Object.fromEntries(IDS.map(i=>[i,$(i).value]))))),400)},soon=()=>{clearTimeout(tm);tm=setTimeout(calc,90)};
 IDS.forEach(i=>{const e=$(i);e.addEventListener('input',()=>{soon();save()});e.addEventListener('change',()=>{touched.add(i);calc();save()});e.addEventListener('blur',()=>{touched.add(i);calc()})});
-$('lk').addEventListener('paste',()=>setTimeout(()=>$('act').click(),60));$('lk').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('act').click()}};
 const FL=['cpp','rat','fap','terceiros'],lockUI=()=>{const p=PRE[$('regime').value];FL.forEach(i=>$(i).disabled=p.lock.includes(i))};
 $('regime').addEventListener('change',()=>{const p=PRE[$('regime').value];FL.forEach(i=>{if(p.lock.includes(i))$(i).value=p[i]??0});lockUI();calc()});
 let man={};['divAtual','divNovo'].forEach(i=>$(i).addEventListener('input',()=>man[i]=1));
 ['horas','cobertura'].forEach(i=>$(i).addEventListener('input',()=>{if(!man.divNovo)$('divNovo').value=+$('horas').value*5;if(!man.divAtual)$('divAtual').value=+$('cobertura').value*5;calc()}));
 refresh();const dr=store(()=>JSON.parse(localStorage.getItem(DK)||'null'));
-if(dr){IDS.forEach(i=>{if(dr[i]!==undefined)$(i).value=dr[i]});man={divAtual:1,divNovo:1};lockUI();calc()}else $('regime').dispatchEvent(new Event('change'));boot();
+if(dr){IDS.forEach(i=>{if(dr[i]!==undefined)$(i).value=dr[i]});man={divAtual:1,divNovo:1};lockUI();calc()}else $('regime').dispatchEvent(new Event('change'));
 </script></body></html>
 
